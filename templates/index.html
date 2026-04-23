@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fake News Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: #111;
+    --border: #222;
+    --accent: #e8ff00;
+    --red: #ff3b3b;
+    --green: #00ff88;
+    --text: #e0e0e0;
+    --muted: #666;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --display: 'Bebas Neue', cursive;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,255,0,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,255,0,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    border-bottom: 1px solid var(--border);
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: var(--display);
+    font-size: 2rem;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(232,255,0,0.4);
+  }
+  .logo span { color: var(--text); }
+  .status-pill {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 4px 12px;
+    border-radius: 2px;
+    border: 1px solid var(--green);
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-pill::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 20px;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+  .hero h1 {
+    font-family: var(--display);
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 0.95;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+  }
+  .hero h1 em {
+    color: var(--accent);
+    font-style: normal;
+    -webkit-text-stroke: 1px var(--accent);
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    font-family: var(--mono);
+    letter-spacing: 1px;
+  }
+
+  /* Tab System */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .tab {
+    padding: 12px 24px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Input Panel */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 32px;
+    position: relative;
+    animation: fadeUp 0.4s ease forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(12px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 40px; height: 2px;
+    background: var(--accent);
+  }
+
+  label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  textarea, input[type="url"] {
+    width: 100%;
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 16px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.7;
+  }
+  textarea { min-height: 160px; }
+  textarea:focus, input[type="url"]:focus {
+    border-color: var(--accent);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 14px 32px;
+    background: var(--accent);
+    color: #000;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:hover {
+    background: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(232,255,0,0.2);
+  }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid #000;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+  .btn.loading .spinner { display: block; }
+  .btn.loading .btn-text { opacity: 0.6; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result Panel */
+  #result {
+    margin-top: 24px;
+    display: none;
+    animation: fadeUp 0.3s ease forwards;
+  }
+
+  .verdict {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 32px;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .verdict::after {
+    content: '';
+    position: absolute;
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    opacity: 0.05;
+  }
+  .verdict.fake { border-color: var(--red); }
+  .verdict.fake::after { background: var(--red); }
+  .verdict.reliable { border-color: var(--green); }
+  .verdict.reliable::after { background: var(--green); }
+
+  .verdict-label {
+    font-family: var(--display);
+    font-size: 4rem;
+    letter-spacing: 4px;
+  }
+  .verdict.fake .verdict-label { color: var(--red); text-shadow: 0 0 30px rgba(255,59,59,0.4); }
+  .verdict.reliable .verdict-label { color: var(--green); text-shadow: 0 0 30px rgba(0,255,136,0.4); }
+
+  .confidence-block { text-align: right; }
+  .confidence-pct {
+    font-family: var(--display);
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+  }
+  .verdict.fake .confidence-pct { color: var(--red); }
+  .verdict.reliable .confidence-pct { color: var(--green); }
+  .confidence-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* Confidence bar */
+  .bar-wrap {
+    background: var(--border);
+    height: 4px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .bar-fill.fake { background: var(--red); }
+  .bar-fill.reliable { background: var(--green); }
+
+  /* Meta grid */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .meta-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+  }
+  .meta-card .meta-val {
+    font-family: var(--display);
+    font-size: 1.8rem;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .meta-card .meta-key {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* Error */
+  .error-msg {
+    background: rgba(255,59,59,0.08);
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 14px 20px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    margin-top: 16px;
+    display: none;
+  }
+
+  /* Demo examples */
+  .examples {
+    margin-top: 24px;
+  }
+  .examples h3 {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .example-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.2s;
+    background: none;
+  }
+  .chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .chip.fake-chip:hover { border-color: var(--red); color: var(--red); }
+  .chip.real-chip:hover { border-color: var(--green); color: var(--green); }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  footer span { display: flex; align-items: center; gap: 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">FAKE<span>SCAN</span></div>
+  <div class="status-pill">API ONLINE</div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>DETECT<br><em>FAKE NEWS</em><br>INSTANTLY</h1>
+    <p>// NLP · TF-IDF · LOGISTIC REGRESSION · FASTAPI //</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('text')">TEXT INPUT</button>
+    <button class="tab" onclick="switchTab('url')">URL SCRAPE</button>
+  </div>
+
+  <!-- TEXT TAB -->
+  <div id="tab-text" class="tab-content active">
+    <div class="panel">
+      <label>Paste article or headline</label>
+      <textarea id="text-input" placeholder="e.g. Scientists HIDE the truth about 5G — whistleblower exposes global conspiracy..."></textarea>
+
+      <div class="examples">
+        <h3>Quick examples →</h3>
+        <div class="example-chips">
+          <button class="chip fake-chip" onclick="setExample('fake1')">🔴 Fake headline</button>
+          <button class="chip fake-chip" onclick="setExample('fake2')">🔴 Conspiracy</button>
+          <button class="chip real-chip" onclick="setExample('real1')">🟢 Real article</button>
+          <button class="chip real-chip" onclick="setExample('real2')">🟢 News report</button>
+        </div>
+      </div>
+
+      <button class="btn" id="analyze-btn" onclick="analyzeText()">
+        <div class="spinner"></div>
+        <span class="btn-text">ANALYZE TEXT</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- URL TAB -->
+  <div id="tab-url" class="tab-content">
+    <div class="panel">
+      <label>Article URL</label>
+      <input type="url" id="url-input" placeholder="https://example.com/article"/>
+      <button class="btn" id="url-btn" onclick="analyzeURL()">
+        <div class="spinner"></div>
+        <span class="btn-text">SCRAPE & ANALYZE</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-msg" id="error-box"></div>
+
+  <!-- Result -->
+  <div id="result">
+    <div class="verdict" id="verdict-box">
+      <div class="verdict-label" id="verdict-label">FAKE</div>
+      <div class="confidence-block">
+        <div class="confidence-pct" id="conf-pct">0%</div>
+        <div class="confidence-label">confidence</div>
+      </div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-fill" id="bar" style="width:0%"></div>
+    </div>
+    <div class="meta-grid">
+      <div class="meta-card">
+        <div class="meta-val" id="meta-words">—</div>
+        <div class="meta-key">Word Count</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-val" id="meta-time">—</div>
+        <div class="meta-key">Process Time (ms)</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-val" id="meta-excl">—</div>
+        <div class="meta-key">Exclamations (!)</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span>📦 FastAPI v0.100+</span>
+  <span>🧠 TF-IDF + LogReg</span>
+  <span>🔍 BeautifulSoup</span>
+  <span>🔐 OOP · Decorators · MLOps</span>
+</footer>
+
+<script>
+const API = "http://localhost:8000";
+
+const EXAMPLES = {
+  fake1: "SHOCKING: Scientists HIDE the truth about vaccines!!! You won't BELIEVE what big pharma doesn't want you to know! Share before this gets deleted!!!",
+  fake2: "BREAKING: Moon landing was FAKED by NASA and Hollywood. Exclusive footage proves the Apollo mission never happened. Wake up sheeple!!!",
+  real1: "A new study published in the New England Journal of Medicine found that the Mediterranean diet reduces the risk of cardiovascular disease by approximately 25% among high-risk adults over a 10-year follow-up period.",
+  real2: "The Federal Reserve raised its benchmark interest rate by 0.25 percentage points on Wednesday, citing persistent inflationary pressures and a resilient labor market with unemployment at 3.7%.",
+};
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  hideResult();
+}
+
+function setExample(key) {
+  document.getElementById('text-input').value = EXAMPLES[key];
+}
+
+function showLoading(btnId, show) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = show;
+  btn.classList.toggle('loading', show);
+}
+
+function hideResult() {
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+}
+
+function showError(msg) {
+  const box = document.getElementById('error-box');
+  box.textContent = '⚠ ' + msg;
+  box.style.display = 'block';
+  document.getElementById('result').style.display = 'none';
+}
+
+function showResult(data) {
+  const isF = data.label === 'FAKE';
+  const cls = isF ? 'fake' : 'reliable';
+  const pct = Math.round((data.confidence || 0) * 100);
+
+  const verdict = document.getElementById('verdict-box');
+  verdict.className = 'verdict ' + cls;
+  document.getElementById('verdict-label').textContent = data.label;
+  document.getElementById('conf-pct').textContent = pct + '%';
+
+  const bar = document.getElementById('bar');
+  bar.className = 'bar-fill ' + cls;
+  setTimeout(() => bar.style.width = pct + '%', 50);
+
+  document.getElementById('meta-words').textContent =
+    data.features?.word_count ?? data.word_count ?? '—';
+  document.getElementById('meta-time').textContent =
+    data.processing_time_ms ? data.processing_time_ms.toFixed(1) : '—';
+  document.getElementById('meta-excl').textContent =
+    data.features?.exclamations ?? '—';
+
+  const box = document.getElementById('result');
+  box.style.display = 'block';
+  box.style.animation = 'none';
+  void box.offsetWidth;
+  box.style.animation = 'fadeUp 0.3s ease forwards';
+
+  document.getElementById('error-box').style.display = 'none';
+}
+
+async function analyzeText() {
+  const text = document.getElementById('text-input').value.trim();
+  if (!text) { showError('Please enter some text.'); return; }
+  showLoading('analyze-btn', true);
+  hideResult();
+  try {
+    const res = await fetch(`${API}/predict`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+    showResult(await res.json());
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    showLoading('analyze-btn', false);
+  }
+}
+
+async function analyzeURL() {
+  const url = document.getElementById('url-input').value.trim();
+  if (!url) { showError('Please enter a URL.'); return; }
+  showLoading('url-btn', true);
+  hideResult();
+  try {
+    const res = await fetch(`${API}/predict-url`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+    showResult(await res.json());
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    showLoading('url-btn', false);
+  }
+}
+</script>
+</body>
+</html>

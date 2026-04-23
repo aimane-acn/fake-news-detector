@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+
+
+# Model files
+bert_model/
+
+# Dataset (optional)
+dataset/
+
+# OS
+.DS_Store
+Thumbs.db
