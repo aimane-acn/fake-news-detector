@@ -26,7 +26,7 @@ A full-stack AI project that detects fake news using NLP and Deep Learning with 
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/fake-news-detector.git
+git clone https://github.com/aimane-acn/fake-news-detector.git
 cd fake-news-detector
 
 python -m venv venv
@@ -43,7 +43,7 @@ pip install -r requirements.txt
 This project uses the **ISOT Fake News Dataset**.
 
 👉 Download from Kaggle:
-https://www.kaggle.com/datasets/[emineyetm](https://www.kaggle.com/datasets/clmentbisaillon/fake-and-real-news-dataset)/fake-news-detection-datasets
+https://www.kaggle.com/datasets/emineyetm/fake-news-detection-datasets
 
 Place the files like this:
 
