@@ -1,21 +1,27 @@
 # 🧠 Fake News Detection API (DistilBERT)
 
-A full-stack AI project that detects fake news using NLP and Deep Learning.
+A full-stack AI project that detects fake news using NLP and Deep Learning with a fine-tuned DistilBERT model.
+
+---
 
 ## 🚀 Features
 
 * 🔍 Detect fake vs reliable news
-* 🌐 URL scraping (auto article extraction)
-* 🧠 DistilBERT fine-tuned model
+* 🌐 URL scraping (automatic article extraction)
+* 🧠 Fine-tuned DistilBERT model
 * ⚡ FastAPI backend
-* 🎨 Modern web UI
+* 🎨 Simple web interface
+
+---
 
 ## 🏗️ Tech Stack
 
 * Python, FastAPI
-* PyTorch, Transformers
+* PyTorch, HuggingFace Transformers
 * BeautifulSoup (web scraping)
-* HTML, CSS, JavaScript
+* HTML / CSS / JavaScript
+
+---
 
 ## 📦 Installation
 
@@ -23,14 +29,44 @@ A full-stack AI project that detects fake news using NLP and Deep Learning.
 git clone https://github.com/YOUR_USERNAME/fake-news-detector.git
 cd fake-news-detector
 
+python -m venv venv
+source venv/bin/activate   # Linux / Mac
+venv\Scripts\activate      # Windows
+
 pip install -r requirements.txt
 ```
 
-## 🧠 Train the model
+---
+
+## 📊 Dataset Setup
+
+This project uses the **ISOT Fake News Dataset**.
+
+👉 Download from Kaggle:
+https://www.kaggle.com/datasets/[emineyetm](https://www.kaggle.com/datasets/clmentbisaillon/fake-and-real-news-dataset)/fake-news-detection-datasets
+
+Place the files like this:
+
+```
+dataset/
+ ├── Fake.csv
+ └── True.csv
+```
+
+---
+
+## 🧠 Train the Model
 
 ```bash
 python train.py
 ```
+
+This will:
+
+* Train DistilBERT
+* Save the model in `bert_model/`
+
+---
 
 ## 🚀 Run the API
 
@@ -44,24 +80,38 @@ Open in browser:
 http://127.0.0.1:8000
 ```
 
-## 📊 API Endpoints
+---
 
-* POST `/predict`
-* POST `/predict-url`
-* GET `/health`
-* GET `/metrics`
+## 📡 API Endpoints
 
-## ⚠️ Notes
+* POST `/predict` → classify text
+* POST `/predict-url` → classify article from URL
+* GET `/health` → system status
+* GET `/metrics` → model performance
 
-* Train the model before running the API
-* Dataset not included (add your own Kaggle dataset)
+---
+
+## ⚠️ Important Notes
+
+* ❗ You must train the model before running the API
+* ❗ Dataset is not included (download manually)
+* ❗ Model files are not included (generated after training)
+
+---
 
 ## 📌 Future Improvements
 
-* Multilingual support (Arabic/French)
-* Better scraping robustness
-* Deployment (Docker, cloud)
+* Multilingual support (Arabic / French)
+* Model optimization
+* Docker deployment
+* Cloud deployment (Render / AWS)
+
+---
 
 ## 👨‍💻 Author
 
-Aimane
+Aimane Achibane
+
+---
+
+⭐ If you like this project, consider giving it a star on GitHub!
